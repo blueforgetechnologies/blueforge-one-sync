@@ -1,0 +1,21 @@
+BLUEFORGE CLOUD - show it in your File Explorer sidebar
+========================================================
+
+This makes "Blueforge Cloud" appear on the LEFT side of File Explorer with the
+cloud logo -- exactly like Dropbox and OneDrive -- pointing at your synced files.
+
+HOW TO USE  (about 30 seconds, no admin needed)
+------------------------------------------------
+1. Double-click:  "Show Blueforge Cloud in Sidebar.cmd"
+2. If Windows shows a blue "Windows protected your PC" box, click
+   "More info"  ->  "Run anyway".  (It's just because the file isn't signed.)
+3. When it says Done, open a new File Explorer window (Windows key + E).
+   "Blueforge Cloud" is now on the left, with the logo.
+
+Tip: you can even run it straight from the zip -- it's a single self-contained
+file and needs nothing beside it. (Extracting first is fine too.)
+
+To remove it later (your files are NOT touched):
+   Double-click:  "Remove Blueforge Cloud from Sidebar.cmd"
+
+That's it. -- Blueforge Technologies

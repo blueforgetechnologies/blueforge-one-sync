@@ -1,0 +1,10 @@
+# Core runtime dependencies for the sync engine.
+requests>=2.31.0
+watchdog>=3.0.0        # instant local change detection (optional; polling fallback)
+
+# --- Phase 2: the desktop tray app (GUI) ---
+pystray>=0.19.5        # system tray / menu-bar icon
+pillow>=10.0.0         # renders the tray icon image
+# tkinter ships with Python (first-run wizard + settings window) — no pip dep.
+# macOS tray backend needs pyobjc; PyInstaller pulls it in on that OS.
+pyobjc-framework-Cocoa>=10.0 ; sys_platform == "darwin"
