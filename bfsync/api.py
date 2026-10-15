@@ -31,14 +31,10 @@ from typing import Any, Dict, List, Optional
 import requests
 
 
-# ---- Baked-in backend facts (anon key is public — same as the web app) -------
+# ---- Baked-in backend facts (the publishable key is public — same as the web app) --
 SUPABASE_URL = "https://hopclmsqndpjhojywxxq.supabase.co"
-ANON_KEY = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-    "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhvcGNsbXNxbmRwamhvanl3eHhxIiwicm9sZSI6"
-    "ImFub24iLCJpYXQiOjE3ODU2MjY5MjQsImV4cCI6MjEwMTIwMjkyNH0."
-    "8DIfT6jZ-UKByc9wqbDp14fCx4BgJCxzTa8NWXZQ8lc"
-)
+# Replaced the legacy anon JWT on 2026-10-15 when the old keys were retired.
+PUBLISHABLE_KEY = "sb_publishable_UiT-I3UqeoMMwkFa4g4AMw_jvAU4-55"
 BUCKET = "files"
 
 # Names we never sync (kept for engine compatibility; the DB tree has no
@@ -100,7 +96,7 @@ class SupabaseClient:
         url = f"{SUPABASE_URL}/auth/v1/token?grant_type=password"
         r = self._session.post(
             url,
-            headers={"apikey": ANON_KEY, "Content-Type": "application/json"},
+            headers={"apikey": PUBLISHABLE_KEY, "Content-Type": "application/json"},
             json={"email": email, "password": password},
             timeout=DEFAULT_TIMEOUT,
         )
@@ -118,7 +114,7 @@ class SupabaseClient:
         url = f"{SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
         r = self._session.post(
             url,
-            headers={"apikey": ANON_KEY, "Content-Type": "application/json"},
+            headers={"apikey": PUBLISHABLE_KEY, "Content-Type": "application/json"},
             json={"refresh_token": self.refresh_token},
             timeout=DEFAULT_TIMEOUT,
         )
@@ -131,7 +127,7 @@ class SupabaseClient:
         self.user_id = data.get("user", {}).get("id") or self.user_id
 
     def _headers(self, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
-        h = {"apikey": ANON_KEY, "Authorization": f"Bearer {self.access_token}"}
+        h = {"apikey": PUBLISHABLE_KEY, "Authorization": f"Bearer {self.access_token}"}
         if extra:
             h.update(extra)
         return h

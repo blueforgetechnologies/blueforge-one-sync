@@ -3,4 +3,4 @@
 Talks directly to Supabase Storage over HTTPS. No third-party sync tools.
 """
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
