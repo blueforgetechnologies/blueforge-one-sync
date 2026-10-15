@@ -42,6 +42,7 @@ class AppState:
         self.workspace_name: str = ""
         self.local_folder: str = ""
         self.email: str = ""
+        self.needs_signin: bool = False
         self.totals: Dict[str, int] = {
             "uploaded": 0, "downloaded": 0,
             "deleted_local": 0, "deleted_remote": 0,
@@ -74,6 +75,11 @@ class AppState:
         with self._lock:
             self.status = status
             self.detail = detail if detail is not None else _LABELS.get(status, status)
+        self._emit()
+
+    def set_needs_signin(self, needed: bool) -> None:
+        with self._lock:
+            self.needs_signin = needed
         self._emit()
 
     def set_paused(self, paused: bool) -> None:
@@ -111,6 +117,7 @@ class AppState:
                 "workspace_name": self.workspace_name,
                 "local_folder": self.local_folder,
                 "email": self.email,
+                "needs_signin": self.needs_signin,
                 "totals": dict(self.totals),
             }
 

@@ -50,6 +50,12 @@ class AuthError(Exception):
     pass
 
 
+class SessionExpired(AuthError):
+    """The server rejected the stored sign-in (refresh token revoked, expired
+    or already used). Retrying can never fix it: the person must sign in
+    again. Transient failures (5xx, 429, network) are ApiError instead."""
+
+
 class ApiError(Exception):
     pass
 
@@ -110,7 +116,7 @@ class SupabaseClient:
 
     def refresh(self) -> None:
         if not self.refresh_token:
-            raise AuthError("No refresh token available; sign in again.")
+            raise SessionExpired("No refresh token available; sign in again.")
         url = f"{SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
         r = self._session.post(
             url,
@@ -118,8 +124,10 @@ class SupabaseClient:
             json={"refresh_token": self.refresh_token},
             timeout=DEFAULT_TIMEOUT,
         )
+        if r.status_code in (400, 401, 403):
+            raise SessionExpired(f"Sign-in rejected ({r.status_code}): {r.text[:200]}")
         if r.status_code != 200:
-            raise AuthError(f"Token refresh failed ({r.status_code}): {r.text}")
+            raise ApiError(f"Token refresh failed ({r.status_code}): {r.text[:200]}")
         data = r.json()
         self.access_token = data["access_token"]
         # Supabase rotates the refresh token on each use.

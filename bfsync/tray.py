@@ -55,7 +55,7 @@ class Tray:
         self.state = state
         self.worker = worker
         self.icon = None
-        self.pending: Optional[str] = None  # 'quit'|'settings'|'reconfigure'|'signout'
+        self.pending: Optional[str] = None  # 'quit'|'settings'|'signin'|'reconfigure'|'signout'
 
     # ---- notifications (used by the worker) --------------------------------
     def notify(self, title: str, message: str) -> None:
@@ -127,6 +127,13 @@ class Tray:
                 pass
             icon.update_menu()
 
+        def needs_signin(_item):
+            return bool(self.state.snapshot().get("needs_signin"))
+
+        def do_signin(icon, item):
+            self.pending = "signin"
+            icon.stop()
+
         def do_settings(icon, item):
             self.pending = "settings"
             icon.stop()
@@ -139,6 +146,7 @@ class Tray:
         return Menu(
             Item(workspace_text, None, enabled=False),
             Item(status_text, None, enabled=False),
+            Item("Sign in again…", do_signin, visible=needs_signin),
             Menu.SEPARATOR,
             Item("Sync now", do_sync),
             Item("Pause syncing", do_pause, checked=is_paused),

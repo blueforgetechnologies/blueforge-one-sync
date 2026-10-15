@@ -12,6 +12,7 @@ Flow:
     │ handle the pending action:                              │
     │    'quit'        -> exit                                 │
     │    'settings'    -> show status window, maybe loop back  │
+    │    'signin'      -> wizard again (sign-in expired)      │
     │    'reconfigure' -> run wizard again, then tray again    │
     │    'signout'     -> logout, back to wizard              │
     └────────────────────────────────────────────────────────┘
@@ -126,6 +127,10 @@ def run() -> int:
                 break
             # else: just loop back and show the tray again
 
+        if action == "signin":
+            # Same as reconfigure: the wizard saves a fresh sign-in over the
+            # rejected one. The folder's sync history is kept (no logout).
+            action = "reconfigure"
         if action == "reconfigure":
             if run_setup_wizard():
                 new = Config.load()

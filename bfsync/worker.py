@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 from typing import Callable, Optional
 
-from .api import ApiError, AuthError, SupabaseClient
+from .api import ApiError, AuthError, SessionExpired, SupabaseClient
 from .config import Config, app_dir
 from .engine import SyncEngine
 from . import runtime
@@ -41,6 +41,11 @@ class SyncWorker(threading.Thread):
         self._paused = threading.Event()  # set == paused
         self._engine: Optional[SyncEngine] = None
         self._logf = None
+        # Set when the server rejected the stored sign-in. Holds the rejected
+        # refresh token so we never send it again; cleared when the config
+        # carries a different one (the person signed in again).
+        self._signed_out = False
+        self._dead_token: Optional[str] = None
 
     # ---- external controls -------------------------------------------------
     def request_sync_now(self) -> None:
@@ -115,8 +120,20 @@ class SyncWorker(threading.Thread):
                 # Build/refresh the engine lazily until it succeeds. Retry
                 # sleeps wait on STOP only, so backoff is actually honoured.
                 if self._engine is None:
+                    if self._signed_out:
+                        # A rejected sign-in cannot heal by retrying, so make no
+                        # network calls until the person signs in again.
+                        if Config.load().refresh_token == self._dead_token:
+                            self._retry_sleep(3)
+                            continue
+                        self._signed_out = False
+                        self.state.set_needs_signin(False)
                     try:
                         self._engine = self._build_engine()
+                    except SessionExpired as e:
+                        self._log(f"[auth] {e}")
+                        self._mark_signed_out()
+                        continue
                     except AuthError as e:
                         self.state.set_status(runtime.ERROR, "Please sign in again")
                         self._log(f"[auth] {e}")
@@ -240,6 +257,17 @@ class SyncWorker(threading.Thread):
             self._log(f"[watch] watchdog unavailable, polling only: {e}")
 
     # ---- helpers -----------------------------------------------------------
+    def _mark_signed_out(self) -> None:
+        first = not self._signed_out
+        self._signed_out = True
+        self._dead_token = Config.load().refresh_token
+        self.state.set_needs_signin(True)
+        self.state.set_status(runtime.ERROR, "Signed out. Choose “Sign in again…”")
+        if first:
+            self._notify("Blueforge One Sync",
+                         "Your sign-in expired, so syncing is paused. Click the "
+                         "Blueforge One Sync icon and choose “Sign in again…”.")
+
     def _idle_wait(self, seconds: float) -> None:
         """Steady idle wait — returns early on sync-now (wake) or stop."""
         self._wake.wait(timeout=seconds)
